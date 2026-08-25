@@ -1,0 +1,424 @@
+:root {
+  --bg: #fff8f0;
+  --surface: #ffffff;
+  --surface-hover: #fff1d6;
+  --text: #292524;
+  --text-secondary: #78716c;
+  --border: #fed7aa;
+
+  --primary: #f97316;
+  --primary-dark: #ea580c;
+
+  --yellow: #f59e0b;
+  --red: #dc2626;
+
+  --search-bg: #fffaf0;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --text: #9ca3af;
+    --text-h: #f3f4f6;
+    --bg: #16171d;
+    --border: #2e303a;
+    --code-bg: #1f2028;
+    --accent: #c084fc;
+    --accent-bg: rgba(192, 132, 252, 0.15);
+    --accent-border: rgba(192, 132, 252, 0.5);
+    --social-bg: rgba(47, 48, 58, 0.5);
+    --shadow:
+      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+  }
+
+  #social .button-icon {
+    filter: invert(1) brightness(2);
+  }
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  text-align: center;
+  border-inline: 1px solid var(--border);
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #fff8f0;
+  color: #292524;
+}
+
+#root {
+  min-height: 100vh;
+}
+.dark {
+  --bg: #18120d;
+  --surface: #241a12;
+  --surface-hover: #362317;
+  --text: #f5f5f4;
+  --text-secondary: #c4b5a5;
+  --border: #5a3922;
+
+  --primary: #fb923c;
+  --primary-dark: #f97316;
+
+  --yellow: #fbbf24;
+  --red: #f87171;
+
+  --search-bg: #2c2017;
+}
+
+/* =========================
+   Application Layout
+   ========================= */
+
+.app-layout {
+  min-height: 100vh;
+}
+
+/* =========================
+   Navbar
+   ========================= */
+
+.navbar {
+  height: 68px;
+  background: var(--surface);
+  border-bottom: 2px solid var(--yellow);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 0 24px;
+  gap: 30px;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--red);
+
+  white-space: nowrap;
+}
+
+.brand-icon {
+  font-size: 23px;
+}
+
+/* =========================
+   Search
+   ========================= */
+
+.navbar-search {
+  flex: 1;
+  max-width: 550px;
+
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+
+  background: var(--search-bg);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+
+  padding: 0 13px;
+}
+
+.navbar-search input {
+  width: 100%;
+
+  border: none;
+  outline: none;
+
+  background: transparent;
+  color: var(--text);
+
+  font-size: 14px;
+}
+
+.navbar-search input::placeholder {
+  color: var(--text-secondary);
+}
+/* =========================
+   Navbar Actions
+   ========================= */
+
+.navbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.notification-button {
+  border: none;
+  background: transparent;
+
+  font-size: 19px;
+  cursor: pointer;
+
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.notification-button:hover {
+  background: var(--surface-hover);
+}
+
+.user-menu {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.theme-button {
+  border: none;
+  background: transparent;
+
+  font-size: 18px;
+  cursor: pointer;
+
+  padding: 6px;
+  border-radius: 6px;
+}
+
+.theme-button:hover {
+  background: var(--surface-hover);
+}
+/* =========================
+   Main Layout
+   ========================= */
+
+.app-body {
+  display: flex;
+  min-height: calc(100vh - 68px);
+}
+
+/* =========================
+   Sidebar
+   ========================= */
+
+.sidebar {
+  width: 240px;
+  flex-shrink: 0;
+
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+
+  padding: 20px 12px;
+}
+
+.sidebar nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.sidebar a {
+  text-decoration: none;
+  color: var(--text-secondary);
+
+  padding: 11px 14px;
+  border-radius: 8px;
+
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+.sidebar a:hover {
+  background: var(--surface-hover);
+  color: var(--primary-dark);
+}
+
+/* Later we'll apply this to the active route */
+.sidebar a.active {
+  background: #f97316;
+  color: #ffffff;
+  font-weight: 600;
+}
+
+.sidebar-divider {
+  height: 1px;
+  background: #fed7aa;
+  margin: 15px 0;
+}
+
+/* =========================
+   Main Content
+   ========================= */
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+
+  padding: 30px;
+}
+
+.page-header h1 {
+  margin: 0;
+  font-size: 28px;
+  color: var(--text);
+}
+
+
+
+
+.page-header p {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+/* =========================
+   Dashboard Cards
+   ========================= */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+.dashboard-card {
+  background: var(--surface);
+
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  padding: 22px;
+
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-2px);
+
+  box-shadow:
+    0 6px 16px rgba(234, 88, 12, 0.08);
+}
+
+.dashboard-card span {
+  display: block;
+
+  color: var(--text-secondary);
+
+  margin-bottom: 10px;
+}
+
+.dashboard-card strong {
+  font-size: 28px;
+  color: var(--primary-dark);
+}
+
+/* =========================
+   Responsive
+   ========================= */
+
+@media (max-width: 1000px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .navbar-search {
+    max-width: 400px;
+  }
+}
+
+@media (max-width: 700px) {
+  .navbar {
+    padding: 0 15px;
+    gap: 12px;
+  }
+
+  .navbar-brand span:last-child {
+    display: none;
+  }
+
+  .navbar-search {
+    max-width: none;
+  }
+
+  .sidebar {
+    width: 190px;
+  }
+
+  .main-content {
+    padding: 20px;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}

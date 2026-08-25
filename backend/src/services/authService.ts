@@ -12,7 +12,6 @@ interface RegisterData {
   phone: string;
   email: string;
   password: string;
-  role: UserRole;
 }
 
 interface LoginData {
@@ -21,7 +20,7 @@ interface LoginData {
 }
 
 export const registerUser = async (data: RegisterData) => {
-  const { name, phone, email, password, role } = data;
+  const { name, phone, email, password } = data;
 
   const existingUser = await userRepository.findOne({
     where: { email },
@@ -39,7 +38,7 @@ export const registerUser = async (data: RegisterData) => {
     phone,
     email,
     passwordHash,
-    role,
+    role: UserRole.SHOP_OWNER,
   });
 
   const savedUser = await userRepository.save(user);
@@ -60,6 +59,9 @@ export const loginUser = async (data: LoginData) => {
     where: { email },
   });
 
+  console.log("Login email:", email);
+  console.log("User found:", !!user);
+
   if (!user) {
     throw new Error("Invalid email or password");
   }
@@ -68,6 +70,8 @@ export const loginUser = async (data: LoginData) => {
     password,
     user.passwordHash
   );
+
+  console.log("Password matches:", passwordMatches);
 
   if (!passwordMatches) {
     throw new Error("Invalid email or password");

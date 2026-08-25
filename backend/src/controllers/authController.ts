@@ -3,7 +3,6 @@ import {
   registerUser,
   loginUser,
 } from "../services/authService";
-import { UserRole } from "../entities/User";
 
 import { AuthRequest } from "../middlewares/authMiddleware";
 
@@ -21,18 +20,11 @@ export const register = async (
   res: Response
 ): Promise<void> => {
   try {
-    const { name, phone, email, password, role } = req.body;
+    const { name, phone, email, password } = req.body;
 
-    if (!name || !phone || !email || !password || !role) {
+    if (!name || !phone || !email || !password) {
       res.status(400).json({
         message: "All fields are required",
-      });
-      return;
-    }
-
-    if (!Object.values(UserRole).includes(role)) {
-      res.status(400).json({
-        message: "Invalid user role",
       });
       return;
     }
@@ -42,11 +34,10 @@ export const register = async (
       phone,
       email,
       password,
-      role,
     });
 
     res.status(201).json({
-      message: "User registered successfully",
+      message: "Shop created successfully",
       user,
     });
   } catch (error) {
