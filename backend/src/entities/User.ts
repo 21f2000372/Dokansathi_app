@@ -38,6 +38,9 @@ export class User {
   })
   role!: UserRole;
 
+  @Column({ type: "varchar", length: 50, nullable: true })
+  shopOwnerId!: string | null;
+
   @Column({ type: "int", default: 0 })
   loyaltyPoints!: number;
 

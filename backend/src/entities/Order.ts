@@ -49,6 +49,9 @@ export class Order {
   @Column({ type: "int", nullable: true })
   queuePosition!: number | null;
 
+  @Column({ type: "varchar", length: 50, nullable: true })
+  shopOwnerId!: string | null;
+
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   items!: OrderItem[];
 

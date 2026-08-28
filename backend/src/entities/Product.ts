@@ -29,6 +29,13 @@ export class Product {
   @Column({ type: "varchar", length: 30 })
   unit!: string;
 
+  @Column({
+    type: "varchar",
+    length: 50,
+    nullable: true,
+  })
+  shopOwnerId!: string | null;
+
   @OneToMany(() => OrderItem, (orderItem) => orderItem.product)
   orderItems!: OrderItem[];
   @ManyToOne(() => Inventory, (inventory) => inventory.products)
