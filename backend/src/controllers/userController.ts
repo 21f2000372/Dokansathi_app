@@ -1,4 +1,6 @@
-import { Request, Response } from "express";
+
+import { Response } from "express";
+import { AuthRequest } from "../middlewares/authMiddleware";
 
 import {
   createAssistant,
@@ -9,6 +11,10 @@ import {
   updateCustomer,
   deactivateAssistant,
   deactivateCustomer,
+  reactivateAssistant,
+  reactivateCustomer,
+  permanentlyDeleteCustomer,
+  permanentlyDeleteAssistant,
 } from "../services/userServices";
 
 
@@ -17,7 +23,7 @@ import {
 // ==========================================
 
 export const addAssistant = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -30,11 +36,21 @@ export const addAssistant = async (
       return;
     }
 
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const assistant = await createAssistant({
       name,
       phone,
       email,
       password,
+      shopOwnerId,
     });
 
     res.status(201).json({
@@ -66,7 +82,7 @@ export const addAssistant = async (
 // ==========================================
 
 export const addCustomer = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -79,11 +95,21 @@ export const addCustomer = async (
       return;
     }
 
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const customer = await createCustomer({
       name,
       phone,
       email,
       password,
+      shopOwnerId,
     });
 
     res.status(201).json({
@@ -111,15 +137,24 @@ export const addCustomer = async (
 
 
 // ==========================================
-// GET ALL ASSISTANTS
+// GET ALL ASSISTANTS FOR CURRENT SHOP OWNER
 // ==========================================
 
 export const getAllAssistants = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const assistants = await getAssistants();
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const assistants = await getAssistants(shopOwnerId);
 
     res.status(200).json({
       assistants,
@@ -135,15 +170,24 @@ export const getAllAssistants = async (
 
 
 // ==========================================
-// GET ALL CUSTOMERS
+// GET ALL CUSTOMERS FOR CURRENT SHOP OWNER
 // ==========================================
 
 export const getAllCustomers = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
-    const customers = await getCustomers();
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const customers = await getCustomers(shopOwnerId);
 
     res.status(200).json({
       customers,
@@ -163,7 +207,7 @@ export const getAllCustomers = async (
 // ==========================================
 
 export const editAssistant = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -176,8 +220,18 @@ export const editAssistant = async (
       return;
     }
 
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const assistant = await updateAssistant(
       userId,
+      shopOwnerId,
       req.body
     );
 
@@ -200,8 +254,7 @@ export const editAssistant = async (
 
     if (
       error instanceof Error &&
-      error.message ===
-        "User with this email already exists"
+      error.message === "User with this email already exists"
     ) {
       res.status(409).json({
         message: error.message,
@@ -221,7 +274,7 @@ export const editAssistant = async (
 // ==========================================
 
 export const editCustomer = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -234,8 +287,18 @@ export const editCustomer = async (
       return;
     }
 
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
     const customer = await updateCustomer(
       userId,
+      shopOwnerId,
       req.body
     );
 
@@ -258,8 +321,7 @@ export const editCustomer = async (
 
     if (
       error instanceof Error &&
-      error.message ===
-        "User with this email already exists"
+      error.message === "User with this email already exists"
     ) {
       res.status(409).json({
         message: error.message,
@@ -279,7 +341,7 @@ export const editCustomer = async (
 // ==========================================
 
 export const removeAssistant = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -292,7 +354,19 @@ export const removeAssistant = async (
       return;
     }
 
-    const assistant = await deactivateAssistant(userId);
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const assistant = await deactivateAssistant(
+      userId,
+      shopOwnerId
+    );
 
     res.status(200).json({
       message: "Assistant deactivated successfully",
@@ -323,7 +397,7 @@ export const removeAssistant = async (
 // ==========================================
 
 export const removeCustomer = async (
-  req: Request,
+  req: AuthRequest,
   res: Response
 ): Promise<void> => {
   try {
@@ -336,7 +410,19 @@ export const removeCustomer = async (
       return;
     }
 
-    const customer = await deactivateCustomer(userId);
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const customer = await deactivateCustomer(
+      userId,
+      shopOwnerId
+    );
 
     res.status(200).json({
       message: "Customer deactivated successfully",
@@ -360,3 +446,250 @@ export const removeCustomer = async (
     });
   }
 };
+
+
+// ==========================================
+// REACTIVATE ASSISTANT
+// ==========================================
+
+export const restoreAssistant = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.params.userId;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const assistant = await reactivateAssistant(
+      userId,
+      shopOwnerId
+    );
+
+    res.status(200).json({
+      message: "Assistant reactivated successfully",
+      user: assistant,
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (
+      error instanceof Error &&
+      error.message === "Assistant not found"
+    ) {
+      res.status(404).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    res.status(500).json({
+      message: "Failed to reactivate assistant",
+    });
+  }
+};
+
+
+// ==========================================
+// REACTIVATE CUSTOMER
+// ==========================================
+
+export const restoreCustomer = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.params.userId;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const customer = await reactivateCustomer(
+      userId,
+      shopOwnerId
+    );
+
+    res.status(200).json({
+      message: "Customer reactivated successfully",
+      user: customer,
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (
+      error instanceof Error &&
+      error.message === "Customer not found"
+    ) {
+      res.status(404).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    res.status(500).json({
+      message: "Failed to reactivate customer",
+    });
+  }
+};
+
+
+// ==========================================
+// PERMANENTLY DELETE ASSISTANT
+// ==========================================
+
+export const purgeAssistant = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.params.userId;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const result = await permanentlyDeleteAssistant(
+      userId,
+      shopOwnerId
+    );
+
+    res.status(200).json({
+      message: "Assistant permanently deleted",
+      user: result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (
+      error instanceof Error &&
+      error.message === "Assistant not found"
+    ) {
+      res.status(404).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    if (
+      error instanceof Error &&
+      error.message ===
+        "Assistant must be deactivated before it can be permanently deleted"
+    ) {
+      res.status(400).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    res.status(500).json({
+      message: "Failed to delete assistant",
+    });
+  }
+};
+
+
+// ==========================================
+// PERMANENTLY DELETE CUSTOMER
+// ==========================================
+
+export const purgeCustomer = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    const userId = req.params.userId;
+
+    if (typeof userId !== "string") {
+      res.status(400).json({
+        message: "Invalid user ID",
+      });
+      return;
+    }
+
+    const shopOwnerId = req.user?.userId;
+
+    if (!shopOwnerId) {
+      res.status(401).json({
+        message: "Authenticated user not found",
+      });
+      return;
+    }
+
+    const result = await permanentlyDeleteCustomer(
+      userId,
+      shopOwnerId
+    );
+
+    res.status(200).json({
+      message: "Customer permanently deleted",
+      user: result,
+    });
+  } catch (error) {
+    console.error(error);
+
+    if (
+      error instanceof Error &&
+      error.message === "Customer not found"
+    ) {
+      res.status(404).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    if (
+      error instanceof Error &&
+      error.message ===
+        "Customer must be deactivated before it can be permanently deleted"
+    ) {
+      res.status(400).json({
+        message: error.message,
+      });
+      return;
+    }
+
+    res.status(500).json({
+      message: "Failed to delete customer",
+    });
+  }
+};
+

@@ -9,6 +9,10 @@ import {
   editCustomer,
   removeAssistant,
   removeCustomer,
+  restoreAssistant,
+  restoreCustomer,
+  purgeAssistant,
+  purgeCustomer
 } from "../controllers/userController";
 
 import { authenticate } from "../middlewares/authMiddleware";
@@ -46,6 +50,13 @@ router.delete(
   removeAssistant
 );
 
+router.patch(
+  "/assistants/:userId/reactivate",
+  authenticate,
+  authorizeRoles(UserRole.SHOP_OWNER),
+  restoreAssistant
+);
+
 
 router.post(
   "/customers",
@@ -75,5 +86,28 @@ router.delete(
   authorizeRoles(UserRole.SHOP_OWNER),
   removeCustomer
 );
+
+router.patch(
+  "/customers/:userId/reactivate",
+  authenticate,
+  authorizeRoles(UserRole.SHOP_OWNER),
+  restoreCustomer
+);
+
+router.delete(
+  "/assistants/:userId/permanent",
+  authenticate,
+  authorizeRoles(UserRole.SHOP_OWNER),
+  purgeAssistant
+);
+
+router.delete(
+  "/customers/:userId/permanent",
+  authenticate,
+  authorizeRoles(UserRole.SHOP_OWNER),
+  purgeCustomer
+);
+
+
 
 export default router;
