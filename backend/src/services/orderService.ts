@@ -220,7 +220,6 @@ export const createOrder = async (
 export const getCustomerOrders = async (
   customerId: string
 ) => {
-
   return orderRepository.find({
     where: {
       customer: {
@@ -233,12 +232,47 @@ export const getCustomerOrders = async (
         product: true,
       },
     },
+    select: {
+      orderId: true,
+      status: true,
+      createdAt: true,
+      totalAmount: true,
+      queuePosition: true,
+      shopOwnerId: true,
+
+      customer: {
+        userId: true,
+        name: true,
+        phone: true,
+        email: true,
+        role: true,
+        shopOwnerId: true,
+        loyaltyPoints: true,
+        availabilityStatus: true,
+      },
+
+      items: {
+        itemId: true,
+        quantity: true,
+        unitPrice: true,
+
+        product: {
+          productId: true,
+          name: true,
+          category: true,
+          price: true,
+          stockQuantity: true,
+          unit: true,
+          shopOwnerId: true,
+        },
+      },
+    },
+
     order: {
       createdAt: "DESC",
     },
   });
 };
-
 
 // ==========================================
 // GET SHOP OWNER ORDERS
@@ -247,7 +281,6 @@ export const getCustomerOrders = async (
 export const getShopOwnerOrders = async (
   shopOwnerId: string
 ) => {
-
   return orderRepository.find({
     where: {
       shopOwnerId,
@@ -258,13 +291,47 @@ export const getShopOwnerOrders = async (
         product: true,
       },
     },
+    select: {
+      orderId: true,
+      status: true,
+      createdAt: true,
+      totalAmount: true,
+      queuePosition: true,
+      shopOwnerId: true,
+
+      customer: {
+        userId: true,
+        name: true,
+        phone: true,
+        email: true,
+        role: true,
+        shopOwnerId: true,
+        loyaltyPoints: true,
+        availabilityStatus: true,
+      },
+
+      items: {
+        itemId: true,
+        quantity: true,
+        unitPrice: true,
+
+        product: {
+          productId: true,
+          name: true,
+          category: true,
+          price: true,
+          stockQuantity: true,
+          unit: true,
+          shopOwnerId: true,
+        },
+      },
+    },
+
     order: {
       createdAt: "DESC",
     },
   });
 };
-
-
 // ==========================================
 // GET SINGLE CUSTOMER ORDER
 // ==========================================
@@ -273,7 +340,6 @@ export const getCustomerOrderById = async (
   orderId: string,
   customerId: string
 ) => {
-
   const order =
     await orderRepository.findOne({
       where: {
@@ -282,18 +348,53 @@ export const getCustomerOrderById = async (
           userId: customerId,
         },
       },
+
       relations: {
         customer: true,
         items: {
           product: true,
         },
       },
+
+      select: {
+        orderId: true,
+        status: true,
+        createdAt: true,
+        totalAmount: true,
+        queuePosition: true,
+        shopOwnerId: true,
+
+        customer: {
+          userId: true,
+          name: true,
+          phone: true,
+          email: true,
+          role: true,
+          shopOwnerId: true,
+          loyaltyPoints: true,
+          availabilityStatus: true,
+        },
+
+        items: {
+          itemId: true,
+          quantity: true,
+          unitPrice: true,
+
+          product: {
+            productId: true,
+            name: true,
+            category: true,
+            price: true,
+            stockQuantity: true,
+            unit: true,
+            shopOwnerId: true,
+          },
+        },
+      },
     });
 
   if (!order) {
-    throw new Error(
-      "Order not found"
-    );
+    throw new Error("Order not found");
   }
 
   return order;
@@ -308,30 +409,63 @@ export const getShopOwnerOrderById = async (
   orderId: string,
   shopOwnerId: string
 ) => {
-
   const order =
     await orderRepository.findOne({
       where: {
         orderId,
         shopOwnerId,
       },
+
       relations: {
         customer: true,
         items: {
           product: true,
         },
       },
+
+      select: {
+        orderId: true,
+        status: true,
+        createdAt: true,
+        totalAmount: true,
+        queuePosition: true,
+        shopOwnerId: true,
+
+        customer: {
+          userId: true,
+          name: true,
+          phone: true,
+          email: true,
+          role: true,
+          shopOwnerId: true,
+          loyaltyPoints: true,
+          availabilityStatus: true,
+        },
+
+        items: {
+          itemId: true,
+          quantity: true,
+          unitPrice: true,
+
+          product: {
+            productId: true,
+            name: true,
+            category: true,
+            price: true,
+            stockQuantity: true,
+            unit: true,
+            shopOwnerId: true,
+          },
+        },
+      },
     });
 
   if (!order) {
-    throw new Error(
-      "Order not found"
-    );
+    throw new Error("Order not found");
   }
 
   return order;
 };
-
 
 // ==========================================
 // UPDATE ORDER STATUS
