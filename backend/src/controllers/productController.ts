@@ -2,13 +2,21 @@ import { Response } from "express";
 
 import { AuthRequest } from "../middlewares/authMiddleware";
 
+import { AppDataSource } from "../config/data-source";
+
+import { User } from "../entities/User";
+
 import {
   createProduct,
   getProducts,
   getProductById,
   updateProduct,
   deleteProduct,
+  getProductsForCustomer,
 } from "../services/productService";
+
+const userRepository =
+  AppDataSource.getRepository(User);
 
 
 // ==========================================
@@ -319,6 +327,66 @@ export const removeProduct = async (
 
     res.status(500).json({
       message: "Failed to delete product",
+    });
+  }
+};
+
+// ==========================================
+// GET PRODUCTS FOR CUSTOMER
+// ==========================================
+
+export const getCustomerProducts = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    const customer =
+      await userRepository.findOne({
+        where: {
+          userId: req.user.userId,
+        },
+      });
+
+    if (!customer) {
+      res.status(404).json({
+        message: "Customer not found",
+      });
+      return;
+    }
+
+    if (!customer.shopOwnerId) {
+      res.status(400).json({
+        message:
+          "Customer is not associated with a shop",
+      });
+      return;
+    }
+
+    const products =
+      await getProductsForCustomer(
+        customer.shopOwnerId
+      );
+
+    res.status(200).json({
+      products,
+    });
+
+  } catch (error) {
+    console.error(
+      "Get customer products error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Failed to fetch products",
     });
   }
 };
