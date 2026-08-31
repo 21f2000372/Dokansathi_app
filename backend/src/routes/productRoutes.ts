@@ -6,6 +6,7 @@ import {
   getProduct,
   editProduct,
   removeProduct,
+  getCustomerProducts,
 } from "../controllers/productController";
 
 import { authenticate } from "../middlewares/authMiddleware";
@@ -33,6 +34,16 @@ router.get(
   authorizeRoles(UserRole.SHOP_OWNER),
   getAllProducts
 );
+
+// CUSTOMER
+
+router.get(
+  "/shop",
+  authenticate,
+  authorizeRoles(UserRole.CUSTOMER),
+  getCustomerProducts
+);
+
 
 router.get(
   "/:productId",

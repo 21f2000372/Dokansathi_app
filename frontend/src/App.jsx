@@ -16,6 +16,12 @@ import Users from "./pages/Users";
 import OwnerDashboard from "./pages/OwnerDashboard";
 import AssistantDashboard from "./pages/AssistantDashboard";
 import CustomerDashboard from "./pages/CustomerDashboard";
+import Orders from "./pages/Orders";
+import Inventory from "./pages/Inventory";
+import Products from "./pages/Products";
+import CustomerProducts from "./pages/CustomerProducts";
+
+
 
 
 function ProtectedRoute({ children, allowedRoles }) {
@@ -154,7 +160,29 @@ function App() {
           }
         />
 
+        <Route
+          path="/orders"
+          element={<Orders />}
+        />
+
+        <Route
+          path="/inventory"
+          element={<Inventory />}
+        />
+
+        <Route
+          path="/products"
+          element={<Products />}
+        />
+
+        <Route
+          path="/customer/products"
+          element={<CustomerProducts />}
+        />
+
       </Routes>
+
+      
 
     </BrowserRouter>
   );

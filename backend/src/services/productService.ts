@@ -208,3 +208,29 @@ export const deleteProduct = async (
     productId,
   };
 };
+
+// ==========================================
+// GET PRODUCTS FOR CUSTOMER
+// ==========================================
+
+export const getProductsForCustomer = async (
+  shopOwnerId: string
+) => {
+  return productRepository.find({
+    where: {
+      shopOwnerId,
+    },
+    select: {
+      productId: true,
+      name: true,
+      category: true,
+      price: true,
+      stockQuantity: true,
+      unit: true,
+      shopOwnerId: true,
+    },
+    order: {
+      name: "ASC",
+    },
+  });
+};

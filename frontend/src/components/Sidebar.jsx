@@ -99,15 +99,15 @@ function Sidebar() {
 
         {isCustomer && (
           <>
-            <NavLink to="/products">
+            <NavLink to="/customer/products">
               Products
             </NavLink>
 
-            <NavLink to="/orders">
+            <NavLink to="orders">
               My Orders
             </NavLink>
 
-            <NavLink to="/tasks">
+            <NavLink to="tasks">
               My Tasks
             </NavLink>
 
