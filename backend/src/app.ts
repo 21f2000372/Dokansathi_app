@@ -9,6 +9,8 @@ import queueRoutes from "./routes/queueRoutes";
 import taskRoutes from "./routes/taskRoutes";
 import billRoutes from "./routes/billRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
+import notificationRoutes from "./routes/notificationRoutes";
+import aiRoutes from "./routes/aiRoutes";
 
 
 
@@ -39,6 +41,8 @@ app.use("/api/queue", queueRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/bills", billRoutes);
 app.use("/api/payments", paymentRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/ai", aiRoutes);
 
 
 

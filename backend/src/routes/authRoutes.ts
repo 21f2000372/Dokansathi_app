@@ -5,11 +5,14 @@ import {
   getMe,
 } from "../controllers/authController";
 
-import { authenticate } from "../middlewares/authMiddleware";
+import {
+  authenticate,
+  rejectIfAuthenticated,
+} from "../middlewares/authMiddleware";
 
 const router = Router();
 
-router.post("/register", register);
+router.post("/register", rejectIfAuthenticated, register);
 router.post("/login", login);
 router.get("/me", authenticate, getMe);
 

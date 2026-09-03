@@ -61,8 +61,16 @@ function Sidebar() {
               Billing
             </NavLink>
 
+            <NavLink to="/payments">
+              Payments
+            </NavLink>
+
             <NavLink to="/users">
               Users
+            </NavLink>
+
+            <NavLink to="/performance">
+              Performance
             </NavLink>
           </>
         )}
@@ -74,20 +82,12 @@ function Sidebar() {
 
         {isAssistant && (
           <>
-            <NavLink to="/orders">
-              Orders
-            </NavLink>
-
-            <NavLink to="/inventory">
+            <NavLink to="/assistant/inventory">
               Inventory
             </NavLink>
 
-            <NavLink to="/queue">
-              Queue
-            </NavLink>
-
-            <NavLink to="/tasks">
-              Tasks
+            <NavLink to="/notifications">
+              Notifications
             </NavLink>
           </>
         )}
@@ -103,12 +103,8 @@ function Sidebar() {
               Products
             </NavLink>
 
-            <NavLink to="orders">
+            <NavLink to="/customer/orders">
               My Orders
-            </NavLink>
-
-            <NavLink to="tasks">
-              My Tasks
             </NavLink>
 
             <NavLink to="/notifications">
@@ -117,17 +113,6 @@ function Sidebar() {
           </>
         )}
 
-
-        {/* Divider */}
-
-        <div className="sidebar-divider" />
-
-
-        {/* Settings */}
-
-        <NavLink to="/settings">
-          Settings
-        </NavLink>
 
       </nav>
     </aside>

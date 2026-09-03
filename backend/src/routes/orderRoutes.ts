@@ -8,6 +8,8 @@ import {
   getOwnerOrder,
   changeOrderStatus,
   cancelShopOrder,
+  cancelMyOrder,
+  getOwnerAnalytics,
 } from "../controllers/orderController";
 
 import { authenticate } from "../middlewares/authMiddleware";
@@ -50,9 +52,28 @@ router.get(
 );
 
 
+// Cancel customer's own pending order
+router.patch(
+  "/my/:orderId/cancel",
+  authenticate,
+  authorizeRoles(UserRole.CUSTOMER),
+  cancelMyOrder
+);
+
+
 // ==========================================
 // SHOP OWNER ROUTES
 // ==========================================
+
+// Get shop sales analytics (declared before
+// "/shop/:orderId" so it isn't captured as an id).
+router.get(
+  "/analytics",
+  authenticate,
+  authorizeRoles(UserRole.SHOP_OWNER),
+  getOwnerAnalytics
+);
+
 
 // Get shop orders
 router.get(

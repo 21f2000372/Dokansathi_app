@@ -76,16 +76,16 @@ export const addPayment = async (
 
       payment: {
         paymentId:
-          result.payment.paymentId,
+          result.paymentId,
 
         amount:
-          result.payment.amount,
+          result.amount,
 
         method:
-          result.payment.method,
+          result.method,
 
         status:
-          result.payment.status,
+          result.status,
       },
     });
   } catch (error) {

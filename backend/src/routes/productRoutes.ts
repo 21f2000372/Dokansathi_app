@@ -7,6 +7,7 @@ import {
   editProduct,
   removeProduct,
   getCustomerProducts,
+  getAssistantProducts,
 } from "../controllers/productController";
 
 import { authenticate } from "../middlewares/authMiddleware";
@@ -42,6 +43,16 @@ router.get(
   authenticate,
   authorizeRoles(UserRole.CUSTOMER),
   getCustomerProducts
+);
+
+
+// ASSISTANT (read-only shop products)
+
+router.get(
+  "/assistant",
+  authenticate,
+  authorizeRoles(UserRole.ASSISTANT),
+  getAssistantProducts
 );
 
 

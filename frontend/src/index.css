@@ -96,7 +96,6 @@ code {
   background: var(--code-bg);
 }
 
-
 * {
   box-sizing: border-box;
 }
@@ -107,7 +106,6 @@ body {
   background: #fff8f0;
   color: #292524;
 }
-
 
 .dark {
   --bg: #18120d;
@@ -227,6 +225,104 @@ body {
   background: var(--surface-hover);
 }
 
+/* =========================
+   Notification Bell + Dropdown
+   ========================= */
+
+.notification-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  background: var(--red);
+  color: #ffffff;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+
+  border-radius: 9px;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+
+  width: 300px;
+  max-height: 380px;
+  overflow-y: auto;
+
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+
+  z-index: 1000;
+}
+
+.notification-dropdown-header {
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text);
+}
+
+.notification-dropdown-empty {
+  padding: 20px 15px;
+  text-align: center;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.notification-dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  padding: 12px 15px;
+  border-bottom: 1px solid var(--border);
+
+  cursor: pointer;
+
+  transition: background 0.15s ease;
+}
+
+.notification-dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.notification-dropdown-item:hover {
+  background: var(--surface-hover);
+}
+
+.notification-dropdown-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.notification-dropdown-subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
 .user-menu {
   display: flex;
   align-items: center;
@@ -237,7 +333,6 @@ body {
 
   cursor: pointer;
 }
-
 
 .theme-button {
   border: none;
@@ -322,14 +417,18 @@ body {
   padding: 30px;
 }
 
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
 .page-header h1 {
   margin: 0;
   font-size: 28px;
   color: var(--text);
 }
-
-
-
 
 .page-header p {
   margin-top: 6px;
@@ -595,7 +694,6 @@ body {
   color: #b91c1c;
 }
 
-
 .danger-button:hover {
   background: #fecaca;
 }
@@ -649,6 +747,18 @@ body {
   font-size: 14px;
 }
 
+.success-message {
+  padding: 12px 16px;
+  margin-bottom: 20px;
+
+  border-radius: 8px;
+
+  background: #dcfce7;
+  color: #166534;
+
+  font-size: 14px;
+}
+
 /* =========================
    MODAL
 ========================= */
@@ -677,8 +787,7 @@ body {
 
   padding: 26px;
 
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
 }
 
 /* =========================
@@ -786,6 +895,79 @@ body {
 .status-inactive {
   background: #fee2e2;
   color: #991b1b;
+}
+
+/* =========================
+   ORDER / TASK STATUS BADGES
+========================= */
+
+.status-pending,
+.status-progress,
+.status-ready,
+.status-completed,
+.status-cancelled,
+.status-billed {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.status-pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status-progress {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.status-ready {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.status-completed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status-cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.status-billed {
+  background: #f3e8ff;
+  color: #6b21a8;
+}
+
+/* =========================
+   SELECT (dropdowns in forms)
+========================= */
+
+.form-group select {
+  width: 100%;
+
+  padding: 11px 12px;
+
+  border: 1px solid #d1d5db;
+  border-radius: 7px;
+
+  font-size: 14px;
+
+  background: var(--surface);
+  color: var(--text);
+
+  outline: none;
+}
+
+.form-group select:focus {
+  border-color: var(--primary);
 }
 
 /* ==========================================
@@ -947,5 +1129,299 @@ body {
 
   .auth-card h1 {
     font-size: 24px;
+  }
+}
+
+/* =====================================================
+   UI POLISH LAYER
+   -----------------------------------------------------
+   Appended to improve layout, spacing and alignment
+   only. No color changes: all values reuse the existing
+   CSS variables and the palette already defined above.
+   ===================================================== */
+
+/* ---- Page shell ---- */
+
+.dashboard-page {
+  max-width: 1100px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.dashboard-header h1 {
+  font-size: 26px;
+  margin: 0 0 6px;
+}
+
+.dashboard-header p {
+  margin: 2px 0 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ---- Summary cards ---- */
+
+.dashboard-cards {
+  gap: 16px;
+  margin-top: 0;
+  margin-bottom: 26px;
+}
+
+.dashboard-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+
+  display: flex;
+  flex-direction: column;
+
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
+}
+
+.dashboard-card:hover {
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.dashboard-card h3 {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 6px;
+}
+
+.dashboard-card-number {
+  margin: 0;
+}
+
+/* ---- Sections / panels ---- */
+
+.dashboard-section {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 22px;
+  margin-top: 22px;
+}
+
+/* Nested cards (e.g. an order card inside a list)
+   sit flush so we don't get a box-in-box that is too
+   heavy; keep a lighter treatment. */
+.dashboard-section .dashboard-section {
+  padding: 16px 18px;
+  background: var(--bg);
+}
+
+.dashboard-section > h2 {
+  font-size: 18px;
+  margin: 0 0 4px;
+}
+
+.section-header {
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.section-header h2,
+.section-header h3 {
+  margin: 0;
+}
+
+.section-header > span {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+/* ---- List rows ---- */
+
+.recent-users {
+  gap: 12px;
+}
+
+.recent-user {
+  gap: 16px;
+  padding: 16px 18px;
+  border-radius: 10px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.recent-user:hover {
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
+}
+
+.recent-user > div {
+  min-width: 0;
+}
+
+.recent-user strong {
+  display: block;
+  margin-bottom: 2px;
+}
+
+.recent-user p {
+  margin: 2px 0 0;
+}
+
+/* Let the first block of a row take remaining space so
+   actions/badges align to the right consistently. */
+.recent-user > div:first-child {
+  flex: 1;
+}
+
+/* ---- Order/task list cards ---- */
+
+.orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.orders-list h4 {
+  margin: 16px 0 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* ---- Buttons: consistent sizing + alignment ---- */
+
+.quick-actions {
+  gap: 10px;
+  align-items: center;
+}
+
+.primary-button,
+.secondary-button,
+.edit-button,
+.danger-button,
+.success-button,
+.text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* ---- Forms: breathing room + full-width controls ---- */
+
+.dashboard-section form {
+  max-width: 520px;
+}
+
+.dashboard-section form > div {
+  margin-bottom: 16px;
+}
+
+.dashboard-section form label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.dashboard-section form input,
+.dashboard-section form select {
+  width: 100%;
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.dashboard-section form input:focus,
+.dashboard-section form select:focus {
+  border-color: var(--primary);
+}
+
+/* Inline label+select used inside list rows (e.g.
+   Payments method picker) should stay compact. */
+.recent-user label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.recent-user select {
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+/* ---- Status badges: consistent pill sizing ---- */
+
+.status-pending,
+.status-progress,
+.status-ready,
+.status-completed,
+.status-cancelled,
+.status-billed,
+.status-active,
+.status-inactive {
+  white-space: nowrap;
+}
+
+/* ---- Messages ---- */
+
+.error-message,
+.success-message {
+  border: 1px solid transparent;
+}
+
+/* ---- Empty-state paragraphs inside sections ---- */
+
+.dashboard-section > p {
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+/* ---- Responsive tightening ---- */
+
+@media (max-width: 700px) {
+  .dashboard-header,
+  .page-header {
+    flex-direction: column;
+  }
+
+  .recent-user {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .recent-user .quick-actions,
+  .recent-user > button {
+    width: 100%;
   }
 }

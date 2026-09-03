@@ -20,6 +20,14 @@ import Orders from "./pages/Orders";
 import Inventory from "./pages/Inventory";
 import Products from "./pages/Products";
 import CustomerProducts from "./pages/CustomerProducts";
+import CustomerOrders from "./pages/CustomerOrders";
+import Tasks from "./pages/Tasks";
+import Notifications from "./pages/Notifications";
+import AssistantInventory from "./pages/AssistantInventory";
+import Queue from "./pages/Queue";
+import Billing from "./pages/Billing";
+import Payments from "./pages/Payments";
+import Performance from "./pages/Performance";
 
 
 
@@ -57,6 +65,45 @@ function ProtectedRoute({ children, allowedRoles }) {
 }
 
 
+/*
+ * PublicOnlyRoute
+ *
+ * For pages that should only be seen by
+ * logged-out visitors (Login, Register).
+ * A user who is already logged in is sent
+ * to their role's dashboard, so an assistant
+ * or customer can never reach the "Create
+ * Shop" (register) page.
+ */
+function PublicOnlyRoute({ children }) {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return <div>Loading...</div>;
+  }
+
+  if (user) {
+    const dashboardPath =
+      user.role === "shop_owner"
+        ? "/owner-dashboard"
+        : user.role === "assistant"
+        ? "/assistant-dashboard"
+        : user.role === "customer"
+        ? "/customer-dashboard"
+        : "/dashboard";
+
+    return (
+      <Navigate
+        to={dashboardPath}
+        replace
+      />
+    );
+  }
+
+  return children;
+}
+
+
 function App() {
   return (
     <BrowserRouter>
@@ -67,7 +114,11 @@ function App() {
 
         <Route
           path="/register"
-          element={<Register />}
+          element={
+            <PublicOnlyRoute>
+              <Register />
+            </PublicOnlyRoute>
+          }
         />
 
 
@@ -75,7 +126,11 @@ function App() {
 
         <Route
           path="/login"
-          element={<Login />}
+          element={
+            <PublicOnlyRoute>
+              <Login />
+            </PublicOnlyRoute>
+          }
         />
 
 
@@ -176,8 +231,118 @@ function App() {
         />
 
         <Route
+          path="/tasks"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Tasks />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/queue"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Queue />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/billing"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Billing />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/payments"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Payments />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/performance"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Performance />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Notifications />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/assistant/inventory"
+          element={
+            <ProtectedRoute
+              allowedRoles={["assistant"]}
+            >
+              <Layout>
+                <AssistantInventory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
           path="/customer/products"
-          element={<CustomerProducts />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["customer"]}
+            >
+              <Layout>
+                <CustomerProducts />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/customer/orders"
+          element={
+            <ProtectedRoute
+              allowedRoles={["customer"]}
+            >
+              <Layout>
+                <CustomerOrders />
+              </Layout>
+            </ProtectedRoute>
+          }
         />
 
       </Routes>
