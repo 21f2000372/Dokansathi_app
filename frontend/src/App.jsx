@@ -28,6 +28,7 @@ import Queue from "./pages/Queue";
 import Billing from "./pages/Billing";
 import Payments from "./pages/Payments";
 import Performance from "./pages/Performance";
+import Reviews from "./pages/Reviews";
 
 
 
@@ -217,17 +218,41 @@ function App() {
 
         <Route
           path="/orders"
-          element={<Orders />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Orders />
+              </Layout>
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/inventory"
-          element={<Inventory />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Inventory />
+              </Layout>
+            </ProtectedRoute>
+          }
         />
 
         <Route
           path="/products"
-          element={<Products />}
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Products />
+              </Layout>
+            </ProtectedRoute>
+          }
         />
 
         <Route
@@ -290,6 +315,19 @@ function App() {
             >
               <Layout>
                 <Performance />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/reviews"
+          element={
+            <ProtectedRoute
+              allowedRoles={["shop_owner"]}
+            >
+              <Layout>
+                <Reviews />
               </Layout>
             </ProtectedRoute>
           }

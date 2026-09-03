@@ -1,7 +1,10 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
 
 function Register() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -35,7 +38,11 @@ function Register() {
         body: JSON.stringify(formData),
       });
 
-      setMessage(data.message || "Shop created successfully!");
+      setMessage(
+        (data.message ||
+          "Shop created successfully!") +
+          " Redirecting to login..."
+      );
 
       setFormData({
         name: "",
@@ -43,6 +50,12 @@ function Register() {
         email: "",
         password: "",
       });
+
+      // Briefly show the success message, then
+      // send the new owner to the login page.
+      setTimeout(() => {
+        navigate("/login");
+      }, 1200);
     } catch (error) {
       setError(error.message);
     } finally {

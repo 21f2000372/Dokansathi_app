@@ -11,6 +11,7 @@ import billRoutes from "./routes/billRoutes";
 import paymentRoutes from "./routes/paymentRoutes";
 import notificationRoutes from "./routes/notificationRoutes";
 import aiRoutes from "./routes/aiRoutes";
+import reviewRoutes from "./routes/reviewRoutes";
 
 
 
@@ -43,6 +44,7 @@ app.use("/api/bills", billRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/reviews", reviewRoutes);
 
 
 

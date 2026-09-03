@@ -29,3 +29,6 @@ coverage/
 # Temporary files
 *.tmp
 *.temp
+
+# Review data (JSON-file storage, demo-grade)
+backend/reviews.json
