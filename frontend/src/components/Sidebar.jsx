@@ -72,6 +72,14 @@ function Sidebar() {
             <NavLink to="/performance">
               Performance
             </NavLink>
+
+            <NavLink to="/reviews">
+              Reviews
+            </NavLink>
+
+            <NavLink to="/notifications">
+              Notifications
+            </NavLink>
           </>
         )}
 

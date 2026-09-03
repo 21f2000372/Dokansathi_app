@@ -811,3 +811,174 @@ export const getShopAnalytics = async (
     products,
   };
 };
+
+
+// ==========================================
+// UPDATE CUSTOMER ORDER (QUANTITIES ONLY)
+//
+// Allows a customer to change the quantities of
+// items in their OWN order, but only while it is
+// still PENDING (before the shop starts
+// preparing it).
+//
+// Stock is adjusted by the delta for each item:
+// increasing a quantity deducts more stock (and
+// is validated against availability); decreasing
+// returns stock. The order total is recomputed.
+//
+// Input: updates = [{ itemId, quantity }, ...]
+// Quantities must be >= 1. To remove an item,
+// the customer cancels the order instead.
+// ==========================================
+
+export const updateCustomerOrder = async (
+  orderId: string,
+  customerId: string,
+  updates: { itemId: string; quantity: number }[],
+) => {
+  if (!Array.isArray(updates) || updates.length === 0) {
+    throw new Error("No item updates provided");
+  }
+
+  const order = await orderRepository.findOne({
+    where: {
+      orderId,
+      customer: {
+        userId: customerId,
+      },
+    },
+    relations: {
+      items: {
+        product: true,
+      },
+    },
+  });
+
+  if (!order) {
+    throw new Error("Order not found");
+  }
+
+  if (order.status !== OrderStatus.PENDING) {
+    throw new Error(
+      "Only pending orders can be updated",
+    );
+  }
+
+  const shopOwnerId = order.shopOwnerId;
+
+  if (!shopOwnerId) {
+    throw new Error("Order does not belong to a shop");
+  }
+
+  // Map the order's current items by itemId.
+  const itemsById = new Map<string, OrderItem>();
+
+  for (const item of order.items) {
+    itemsById.set(item.itemId, item);
+  }
+
+  // Validate every requested update first, so we
+  // don't apply partial changes if one is invalid.
+  const plan: {
+    orderItem: OrderItem;
+    product: Product;
+    newQuantity: number;
+    delta: number;
+  }[] = [];
+
+  for (const update of updates) {
+    if (
+      !Number.isInteger(update.quantity) ||
+      update.quantity < 1
+    ) {
+      throw new Error(
+        "Quantity must be a positive integer",
+      );
+    }
+
+    const orderItem = itemsById.get(update.itemId);
+
+    if (!orderItem) {
+      throw new Error("Order item not found");
+    }
+
+    // Reload the product (scoped to the shop) to
+    // get the current stock.
+    const product = await productRepository.findOne({
+      where: {
+        productId: orderItem.product.productId,
+        shopOwnerId,
+      },
+    });
+
+    if (!product) {
+      throw new Error("Product not found");
+    }
+
+    const delta =
+      update.quantity - orderItem.quantity;
+
+    // If increasing, ensure enough stock is
+    // available for the additional amount.
+    if (delta > 0 && product.stockQuantity < delta) {
+      throw new Error(
+        `Insufficient stock for ${product.name}`,
+      );
+    }
+
+    plan.push({
+      orderItem,
+      product,
+      newQuantity: update.quantity,
+      delta,
+    });
+  }
+
+  // Apply the validated changes: adjust stock and
+  // update item quantities.
+  for (const change of plan) {
+    // delta > 0 => deduct extra stock;
+    // delta < 0 => return stock.
+    change.product.stockQuantity -= change.delta;
+    await productRepository.save(change.product);
+
+    change.orderItem.quantity = change.newQuantity;
+    await orderItemRepository.save(change.orderItem);
+  }
+
+  // Recompute the order total across ALL items
+  // (updated and untouched).
+  const refreshedItems = await orderItemRepository.find({
+    where: {
+      order: {
+        orderId: order.orderId,
+      },
+    },
+    relations: {
+      product: true,
+    },
+  });
+
+  let totalAmount = 0;
+
+  for (const item of refreshedItems) {
+    totalAmount +=
+      Number(item.unitPrice) * item.quantity;
+  }
+
+  order.totalAmount = totalAmount;
+
+  const updatedOrder = await orderRepository.save(order);
+
+  return {
+    orderId: updatedOrder.orderId,
+    status: updatedOrder.status,
+    totalAmount: updatedOrder.totalAmount,
+    items: refreshedItems.map((item) => ({
+      itemId: item.itemId,
+      productId: item.product.productId,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+    })),
+  };
+};

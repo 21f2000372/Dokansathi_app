@@ -156,10 +156,14 @@ function Navbar() {
       return;
     }
 
+    // Everyone (including the owner) reads their
+    // stored notifications feed.
+    loadUserNotifications();
+
+    // The owner additionally gets computed
+    // "ready to deliver" order alerts.
     if (isOwner) {
       loadOwnerAlerts();
-    } else {
-      loadUserNotifications();
     }
   };
 
@@ -264,7 +268,7 @@ function Navbar() {
   // loaded notifications as seen (covers any
   // that arrive from the async refresh).
   useEffect(() => {
-    if (dropdownOpen && !isOwner) {
+    if (dropdownOpen) {
       markAllSeen();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -313,8 +317,12 @@ function Navbar() {
         )
     ).length;
 
+  // Owner badge combines computed "ready to
+  // deliver" order alerts with unread stored
+  // notifications (e.g. assistant restock
+  // reminders). Everyone else just uses unread.
   const notifCount = isOwner
-    ? ownerAlerts.length
+    ? ownerAlerts.length + unreadCount
     : unreadCount;
 
 
@@ -386,57 +394,108 @@ function Navbar() {
 
 
               {/* ---------------------------
-                  OWNER: prep-done alerts
+                  OWNER: prep-done alerts +
+                  stored notifications feed
               --------------------------- */}
 
               {isOwner ? (
 
-                ownerAlerts.length === 0 ? (
+                ownerAlerts.length === 0 &&
+                userNotifications.length === 0 ? (
 
                   <div className="notification-dropdown-empty">
-                    No orders ready right now.
+                    No notifications right now.
                   </div>
 
                 ) : (
 
-                  ownerAlerts.map((order) => (
+                  <>
 
-                    <div
-                      key={order.orderId}
-                      className="notification-dropdown-item"
-                      onClick={goToOrders}
-                    >
+                    {/* Computed "ready to
+                        deliver" order alerts */}
+                    {ownerAlerts.map((order) => (
 
-                      <span>
-                        ✅
-                      </span>
+                      <div
+                        key={order.orderId}
+                        className="notification-dropdown-item"
+                        onClick={goToOrders}
+                      >
 
-                      <div>
+                        <span>
+                          ✅
+                        </span>
 
-                        <p className="notification-dropdown-title">
-                          Order #
-                          {order.orderId.slice(
-                            0,
-                            8
-                          )}{" "}
-                          — Prep done
-                        </p>
+                        <div>
 
-                        <p className="notification-dropdown-subtitle">
-                          ₹
-                          {order.totalAmount}
-                          {" · "}
-                          {order.customer
-                            ?.name ||
-                            "Customer"}
-                          {" · Mark ready →"}
-                        </p>
+                          <p className="notification-dropdown-title">
+                            Order #
+                            {order.orderId.slice(
+                              0,
+                              8
+                            )}{" "}
+                            — Prep done
+                          </p>
+
+                          <p className="notification-dropdown-subtitle">
+                            ₹
+                            {order.totalAmount}
+                            {" · "}
+                            {order.customer
+                              ?.name ||
+                              "Customer"}
+                            {" · Mark ready →"}
+                          </p>
+
+                        </div>
 
                       </div>
 
-                    </div>
+                    ))}
 
-                  ))
+
+                    {/* Stored notifications
+                        (e.g. restock reminders) */}
+                    {userNotifications
+                      .slice(0, 8)
+                      .map((notification) => (
+
+                        <div
+                          key={
+                            notification.notificationId
+                          }
+                          className="notification-dropdown-item"
+                          onClick={
+                            goToNotifications
+                          }
+                        >
+
+                          <span>
+                            🔔
+                          </span>
+
+                          <div>
+
+                            <p className="notification-dropdown-title">
+                              {
+                                notification.message
+                              }
+                            </p>
+
+                            <p className="notification-dropdown-subtitle">
+                              {notification.sentAt
+                                ? new Date(
+                                    notification.sentAt
+                                  ).toLocaleString()
+                                : ""}
+                            </p>
+
+                          </div>
+
+                        </div>
+
+                      ))}
+
+                  </>
 
                 )
 

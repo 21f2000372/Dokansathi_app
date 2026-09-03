@@ -10,6 +10,7 @@ import {
   cancelShopOrder,
   cancelMyOrder,
   getOwnerAnalytics,
+  updateMyOrder,
 } from "../controllers/orderController";
 
 import { authenticate } from "../middlewares/authMiddleware";
@@ -49,6 +50,15 @@ router.get(
   authenticate,
   authorizeRoles(UserRole.CUSTOMER),
   getMyOrder
+);
+
+
+// Update customer's own pending order (quantities)
+router.patch(
+  "/my/:orderId",
+  authenticate,
+  authorizeRoles(UserRole.CUSTOMER),
+  updateMyOrder
 );
 
 

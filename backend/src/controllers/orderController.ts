@@ -12,6 +12,7 @@ import {
   cancelOrder,
   cancelCustomerOrder,
   getShopAnalytics,
+  updateCustomerOrder,
 } from "../services/orderService";
 
 import { OrderStatus } from "../entities/Order";
@@ -536,6 +537,89 @@ export const getOwnerAnalytics = async (
     res.status(500).json({
       message:
         "Failed to load analytics",
+    });
+  }
+};
+
+
+// ==========================================
+// CUSTOMER - UPDATE OWN ORDER (QUANTITIES)
+// ==========================================
+
+export const updateMyOrder = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+
+  try {
+
+    if (!req.user) {
+      res.status(401).json({
+        message:
+          "Authentication required",
+      });
+      return;
+    }
+
+    const orderId = String(
+      req.params.orderId
+    );
+
+    const { items } = req.body;
+
+    if (!Array.isArray(items)) {
+      res.status(400).json({
+        message:
+          "Items must be provided as a list",
+      });
+      return;
+    }
+
+    const result =
+      await updateCustomerOrder(
+        orderId,
+        req.user.userId,
+        items
+      );
+
+    res.status(200).json({
+      message: "Order updated successfully",
+      order: result,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Update order error:",
+      error
+    );
+
+    const detail =
+      error instanceof Error
+        ? error.message
+        : "Failed to update order";
+
+    const knownClientErrors = [
+      "No item updates provided",
+      "Order not found",
+      "Only pending orders can be updated",
+      "Order does not belong to a shop",
+      "Quantity must be a positive integer",
+      "Order item not found",
+      "Product not found",
+    ];
+
+    const isInsufficientStock =
+      detail.startsWith("Insufficient stock");
+
+    const status =
+      knownClientErrors.includes(detail) ||
+      isInsufficientStock
+        ? 400
+        : 500;
+
+    res.status(status).json({
+      message: detail,
     });
   }
 };

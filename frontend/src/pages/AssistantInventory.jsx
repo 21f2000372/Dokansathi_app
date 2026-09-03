@@ -8,6 +8,11 @@ function AssistantInventory() {
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  // productId currently being sent as a reminder
+  const [remindingId, setRemindingId] =
+    useState(null);
 
 
   // ==========================================
@@ -57,6 +62,43 @@ function AssistantInventory() {
 
 
   // ==========================================
+  // SEND LOW-STOCK REMINDER TO OWNER
+  // ==========================================
+
+  const sendReminder = async (product) => {
+    try {
+      setRemindingId(product.productId);
+      setError("");
+      setSuccess("");
+
+      await apiRequest(
+        `/notifications/reminder/${product.productId}`,
+        {
+          method: "POST",
+        }
+      );
+
+      setSuccess(
+        `Reminder sent to owner for "${product.name}".`
+      );
+
+    } catch (error) {
+      console.error(
+        "Failed to send reminder:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "Failed to send reminder"
+      );
+    } finally {
+      setRemindingId(null);
+    }
+  };
+
+
+  // ==========================================
   // RENDER
   // ==========================================
 
@@ -92,6 +134,12 @@ function AssistantInventory() {
       {error && (
         <div className="error-message">
           {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="success-message">
+          {success}
         </div>
       )}
 
@@ -220,11 +268,33 @@ function AssistantInventory() {
                     product.stockQuantity
                   ) <= 5 && (
 
-                    <p>
-                      <span className="status-cancelled">
-                        Low stock
-                      </span>
-                    </p>
+                    <>
+
+                      <p>
+                        <span className="status-cancelled">
+                          Low stock
+                        </span>
+                      </p>
+
+                      <button
+                        onClick={() =>
+                          sendReminder(
+                            product
+                          )
+                        }
+                        className="secondary-button"
+                        disabled={
+                          remindingId ===
+                          product.productId
+                        }
+                      >
+                        {remindingId ===
+                        product.productId
+                          ? "Sending..."
+                          : "Send Reminder to Owner"}
+                      </button>
+
+                    </>
 
                   )}
 

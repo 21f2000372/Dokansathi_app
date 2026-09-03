@@ -25,6 +25,26 @@ function CustomerOrders() {
   const [selectedOrder, setSelectedOrder] =
     useState(null);
 
+  // Reviews keyed by orderId.
+  // existingReviews[orderId] = review or null
+  // reviewDrafts[orderId] = { rating, comment }
+  const [existingReviews, setExistingReviews] =
+    useState({});
+  const [reviewDrafts, setReviewDrafts] =
+    useState({});
+  const [submittingReviewId, setSubmittingReviewId] =
+    useState(null);
+
+  // Edit mode for pending orders.
+  // editingOrderId = orderId currently being edited
+  // editDraft = { [itemId]: quantity }
+  const [editingOrderId, setEditingOrderId] =
+    useState(null);
+  const [editDraft, setEditDraft] =
+    useState({});
+  const [savingEdit, setSavingEdit] =
+    useState(false);
+
 
   // ==========================================
   // LOAD ORDERS
@@ -115,6 +135,252 @@ function CustomerOrders() {
       );
     } finally {
       setCancellingId(null);
+    }
+  };
+
+
+  // ==========================================
+  // OPEN / CLOSE ORDER DETAILS
+  //
+  // When a completed order is opened, load the
+  // customer's existing review (if any) so the
+  // form can be pre-filled.
+  // ==========================================
+
+  const toggleOrderDetails = async (order) => {
+    // Collapse if already open.
+    if (
+      selectedOrder?.orderId === order.orderId
+    ) {
+      setSelectedOrder(null);
+      return;
+    }
+
+    setSelectedOrder(order);
+
+    if (order.status !== "completed") {
+      return;
+    }
+
+    // Avoid refetching if we already have it.
+    if (
+      existingReviews[order.orderId] !==
+      undefined
+    ) {
+      return;
+    }
+
+    try {
+      const data = await apiRequest(
+        `/reviews/${order.orderId}`
+      );
+
+      const review = data.review || null;
+
+      setExistingReviews((previous) => ({
+        ...previous,
+        [order.orderId]: review,
+      }));
+
+      setReviewDrafts((previous) => ({
+        ...previous,
+        [order.orderId]: {
+          rating: review?.rating || 0,
+          comment: review?.comment || "",
+        },
+      }));
+
+    } catch (error) {
+      console.error(
+        "Failed to load review:",
+        error
+      );
+    }
+  };
+
+
+  // ==========================================
+  // REVIEW DRAFT HELPERS
+  // ==========================================
+
+  const getDraft = (orderId) =>
+    reviewDrafts[orderId] || {
+      rating: 0,
+      comment: "",
+    };
+
+  const setDraftRating = (orderId, rating) => {
+    setReviewDrafts((previous) => ({
+      ...previous,
+      [orderId]: {
+        ...getDraft(orderId),
+        rating,
+      },
+    }));
+  };
+
+  const setDraftComment = (
+    orderId,
+    comment
+  ) => {
+    setReviewDrafts((previous) => ({
+      ...previous,
+      [orderId]: {
+        ...getDraft(orderId),
+        comment,
+      },
+    }));
+  };
+
+
+  // ==========================================
+  // SUBMIT REVIEW
+  // ==========================================
+
+  const submitReview = async (orderId) => {
+    const draft = getDraft(orderId);
+
+    if (
+      !draft.rating ||
+      draft.rating < 1
+    ) {
+      setError(
+        "Please select a star rating."
+      );
+      return;
+    }
+
+    try {
+      setSubmittingReviewId(orderId);
+      setError("");
+      setSuccess("");
+
+      const data = await apiRequest(
+        `/reviews/${orderId}`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            rating: draft.rating,
+            comment: draft.comment,
+          }),
+        }
+      );
+
+      setExistingReviews((previous) => ({
+        ...previous,
+        [orderId]: data.review,
+      }));
+
+      setSuccess(
+        "Thank you! Your review was saved."
+      );
+
+    } catch (error) {
+      console.error(
+        "Failed to submit review:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "Failed to submit review"
+      );
+    } finally {
+      setSubmittingReviewId(null);
+    }
+  };
+
+
+  // ==========================================
+  // EDIT ORDER (pending only)
+  // ==========================================
+
+  const startEdit = (order) => {
+    setError("");
+    setSuccess("");
+
+    // Seed the draft with current quantities.
+    const draft = {};
+
+    for (const item of order.items || []) {
+      draft[item.itemId] = item.quantity;
+    }
+
+    setEditDraft(draft);
+    setEditingOrderId(order.orderId);
+  };
+
+
+  const cancelEdit = () => {
+    setEditingOrderId(null);
+    setEditDraft({});
+  };
+
+
+  const changeEditQty = (itemId, delta) => {
+    setEditDraft((previous) => {
+      const current = previous[itemId] || 1;
+      const next = current + delta;
+
+      // Minimum quantity is 1 (removing an item
+      // is done via Cancel Order).
+      if (next < 1) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [itemId]: next,
+      };
+    });
+  };
+
+
+  const saveEdit = async (orderId) => {
+    try {
+      setSavingEdit(true);
+      setError("");
+      setSuccess("");
+
+      const items = Object.entries(
+        editDraft
+      ).map(([itemId, quantity]) => ({
+        itemId,
+        quantity,
+      }));
+
+      await apiRequest(
+        `/orders/my/${orderId}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({
+            items,
+          }),
+        }
+      );
+
+      setSuccess(
+        "Order updated successfully."
+      );
+
+      setEditingOrderId(null);
+      setEditDraft({});
+      setSelectedOrder(null);
+
+      await loadOrders();
+
+    } catch (error) {
+      console.error(
+        "Failed to update order:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "Failed to update order"
+      );
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -548,11 +814,8 @@ function CustomerOrders() {
 
                   <button
                     onClick={() =>
-                      setSelectedOrder(
-                        selectedOrder?.orderId ===
-                          order.orderId
-                          ? null
-                          : order
+                      toggleOrderDetails(
+                        order
                       )
                     }
                     className="primary-button"
@@ -688,6 +951,290 @@ function CustomerOrders() {
                         </div>
 
                       )
+                    )}
+
+
+                    {/* Edit order (pending only) */}
+
+                    {order.status ===
+                      "pending" && (
+
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          paddingTop: "15px",
+                          borderTop:
+                            "1px solid var(--border)",
+                        }}
+                      >
+
+                        {editingOrderId ===
+                        order.orderId ? (
+
+                          <>
+
+                            <h4>
+                              Edit Quantities
+                            </h4>
+
+                            {order.items?.map(
+                              (item) => (
+
+                                <div
+                                  key={
+                                    item.itemId
+                                  }
+                                  className="recent-user"
+                                >
+
+                                  <div>
+
+                                    <strong>
+                                      {item
+                                        .product
+                                        ?.name ||
+                                        "Product"}
+                                    </strong>
+
+                                    <p>
+                                      ₹
+                                      {
+                                        item.unitPrice
+                                      }{" "}
+                                      each
+                                    </p>
+
+                                  </div>
+
+
+                                  <div>
+
+                                    <button
+                                      onClick={() =>
+                                        changeEditQty(
+                                          item.itemId,
+                                          -1
+                                        )
+                                      }
+                                      className="secondary-button"
+                                    >
+                                      −
+                                    </button>
+
+                                    <strong
+                                      style={{
+                                        margin:
+                                          "0 10px",
+                                      }}
+                                    >
+                                      {editDraft[
+                                        item
+                                          .itemId
+                                      ] ??
+                                        item.quantity}
+                                    </strong>
+
+                                    <button
+                                      onClick={() =>
+                                        changeEditQty(
+                                          item.itemId,
+                                          1
+                                        )
+                                      }
+                                      className="secondary-button"
+                                    >
+                                      +
+                                    </button>
+
+                                  </div>
+
+                                </div>
+
+                              )
+                            )}
+
+
+                            <div
+                              className="quick-actions"
+                              style={{
+                                marginTop:
+                                  "12px",
+                              }}
+                            >
+
+                              <button
+                                onClick={() =>
+                                  saveEdit(
+                                    order.orderId
+                                  )
+                                }
+                                className="primary-button"
+                                disabled={
+                                  savingEdit
+                                }
+                              >
+                                {savingEdit
+                                  ? "Saving..."
+                                  : "Save Changes"}
+                              </button>
+
+                              <button
+                                onClick={
+                                  cancelEdit
+                                }
+                                className="secondary-button"
+                                disabled={
+                                  savingEdit
+                                }
+                              >
+                                Cancel Edit
+                              </button>
+
+                            </div>
+
+                          </>
+
+                        ) : (
+
+                          <button
+                            onClick={() =>
+                              startEdit(order)
+                            }
+                            className="primary-button"
+                          >
+                            Edit Order
+                          </button>
+
+                        )}
+
+                      </div>
+
+                    )}
+
+
+                    {/* Review (completed orders) */}
+
+                    {order.status ===
+                      "completed" && (
+
+                      <div
+                        style={{
+                          marginTop: "20px",
+                          paddingTop: "15px",
+                          borderTop:
+                            "1px solid var(--border)",
+                        }}
+                      >
+
+                        <h4>
+                          {existingReviews[
+                            order.orderId
+                          ]
+                            ? "Your Review"
+                            : "Rate this order"}
+                        </h4>
+
+
+                        {/* Star rating */}
+
+                        <div
+                          style={{
+                            fontSize: "24px",
+                            cursor: "pointer",
+                          }}
+                        >
+
+                          {[1, 2, 3, 4, 5].map(
+                            (star) => (
+
+                              <span
+                                key={star}
+                                onClick={() =>
+                                  setDraftRating(
+                                    order.orderId,
+                                    star
+                                  )
+                                }
+                                title={`${star} star${
+                                  star !== 1
+                                    ? "s"
+                                    : ""
+                                }`}
+                                style={{
+                                  marginRight:
+                                    "4px",
+                                }}
+                              >
+                                {getDraft(
+                                  order.orderId
+                                ).rating >=
+                                star
+                                  ? "★"
+                                  : "☆"}
+                              </span>
+
+                            )
+                          )}
+
+                        </div>
+
+
+                        <textarea
+                          value={
+                            getDraft(
+                              order.orderId
+                            ).comment
+                          }
+                          onChange={(event) =>
+                            setDraftComment(
+                              order.orderId,
+                              event.target
+                                .value
+                            )
+                          }
+                          placeholder="Write a comment (optional)..."
+                          rows={3}
+                          maxLength={500}
+                          style={{
+                            width: "100%",
+                            marginTop: "10px",
+                          }}
+                        />
+
+
+                        <div
+                          className="quick-actions"
+                          style={{
+                            marginTop: "10px",
+                          }}
+                        >
+
+                          <button
+                            onClick={() =>
+                              submitReview(
+                                order.orderId
+                              )
+                            }
+                            className="primary-button"
+                            disabled={
+                              submittingReviewId ===
+                              order.orderId
+                            }
+                          >
+                            {submittingReviewId ===
+                            order.orderId
+                              ? "Saving..."
+                              : existingReviews[
+                                  order.orderId
+                                ]
+                              ? "Update Review"
+                              : "Submit Review"}
+                          </button>
+
+                        </div>
+
+                      </div>
+
                     )}
 
                   </div>
