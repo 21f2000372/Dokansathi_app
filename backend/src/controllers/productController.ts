@@ -332,6 +332,67 @@ export const removeProduct = async (
 };
 
 // ==========================================
+// GET PRODUCTS FOR ASSISTANT (READ-ONLY)
+// ==========================================
+
+export const getAssistantProducts = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({
+        message: "Authentication required",
+      });
+      return;
+    }
+
+    const assistant =
+      await userRepository.findOne({
+        where: {
+          userId: req.user.userId,
+        },
+      });
+
+    if (!assistant) {
+      res.status(404).json({
+        message: "Assistant not found",
+      });
+      return;
+    }
+
+    if (!assistant.shopOwnerId) {
+      res.status(400).json({
+        message:
+          "Assistant is not associated with a shop",
+      });
+      return;
+    }
+
+    const products =
+      await getProductsForCustomer(
+        assistant.shopOwnerId
+      );
+
+    res.status(200).json({
+      products,
+    });
+
+  } catch (error) {
+    console.error(
+      "Get assistant products error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Failed to fetch products",
+    });
+  }
+};
+
+
+// ==========================================
 // GET PRODUCTS FOR CUSTOMER
 // ==========================================
 

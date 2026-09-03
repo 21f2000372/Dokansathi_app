@@ -82,6 +82,26 @@ export const createBill = async (
 
   await orderRepository.save(order);
 
+  // Re-sequence the remaining queued orders so
+  // positions stay contiguous (no gap left by
+  // the billed order).
+  const remainingOrders =
+    await orderRepository.find({
+      where: { shopOwnerId },
+      order: { queuePosition: "ASC" },
+    });
+
+  let position = 1;
+
+  for (const remainingOrder of remainingOrders) {
+    if (remainingOrder.queuePosition !== null) {
+      remainingOrder.queuePosition = position;
+      position++;
+    }
+  }
+
+  await orderRepository.save(remainingOrders);
+
   return savedBill;
 };
 

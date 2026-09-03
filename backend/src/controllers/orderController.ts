@@ -10,6 +10,8 @@ import {
   getShopOwnerOrderById,
   updateOrderStatus,
   cancelOrder,
+  cancelCustomerOrder,
+  getShopAnalytics,
 } from "../services/orderService";
 
 import { OrderStatus } from "../entities/Order";
@@ -223,6 +225,76 @@ export const getMyOrder = async (
 
 
 // ==========================================
+// CUSTOMER - CANCEL OWN ORDER
+// ==========================================
+
+export const cancelMyOrder = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+
+  try {
+
+    if (!req.user) {
+      res.status(401).json({
+        message:
+          "Authentication required",
+      });
+      return;
+    }
+
+    const orderId = String(
+      req.params.orderId
+    );
+
+    const result =
+      await cancelCustomerOrder(
+        orderId,
+        req.user.userId
+      );
+
+    res.status(200).json({
+      message:
+        "Order cancelled successfully",
+      order: result,
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Cancel customer order error:",
+      error
+    );
+
+    if (error instanceof Error) {
+
+      if (
+        error.message ===
+        "Order not found"
+      ) {
+        res.status(404).json({
+          message:
+            "Order not found",
+        });
+        return;
+      }
+
+      res.status(400).json({
+        message:
+          error.message,
+      });
+      return;
+    }
+
+    res.status(500).json({
+      message:
+        "Failed to cancel order",
+    });
+  }
+};
+
+
+// ==========================================
 // SHOP OWNER - GET SINGLE ORDER
 // ==========================================
 
@@ -423,6 +495,47 @@ export const cancelShopOrder = async (
     res.status(500).json({
       message:
         "Failed to cancel order",
+    });
+  }
+};
+
+
+// ==========================================
+// SHOP OWNER - GET ANALYTICS
+// ==========================================
+
+export const getOwnerAnalytics = async (
+  req: AuthRequest,
+  res: Response
+): Promise<void> => {
+
+  try {
+
+    if (!req.user) {
+      res.status(401).json({
+        message:
+          "Authentication required",
+      });
+      return;
+    }
+
+    const analytics =
+      await getShopAnalytics(
+        req.user.userId
+      );
+
+    res.status(200).json(analytics);
+
+  } catch (error) {
+
+    console.error(
+      "Get analytics error:",
+      error
+    );
+
+    res.status(500).json({
+      message:
+        "Failed to load analytics",
     });
   }
 };

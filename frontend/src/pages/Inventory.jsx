@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { apiRequest } from "../services/api";
 
 function Inventory() {
+  const navigate = useNavigate();
   const [inventory, setInventory] = useState(null);
   const [allProducts, setAllProducts] = useState([]);
 
@@ -181,6 +183,15 @@ function Inventory() {
           </p>
 
         </div>
+
+        <button
+          onClick={() =>
+            navigate("/owner-dashboard")
+          }
+          className="secondary-button"
+        >
+          Back to Dashboard
+        </button>
 
       </div>
 

@@ -368,7 +368,7 @@ function CustomerDashboard() {
                   <button
                     onClick={() =>
                       navigate(
-                        `/customer/orders/${order.orderId}`
+                        "/customer/orders"
                       )
                     }
                     className="text-button"

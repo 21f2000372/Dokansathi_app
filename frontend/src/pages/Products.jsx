@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 import { apiRequest } from "../services/api";
 
 function Products() {
+  const navigate = useNavigate();
   const [products, setProducts] = useState([]);
 
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,18 @@ function Products() {
 
   const [stockValue, setStockValue] =
     useState("");
+
+  // Restock: add an amount on top of
+  // the product's current stock.
+  const [restockProduct, setRestockProduct] =
+    useState(null);
+
+  const [restockValue, setRestockValue] =
+    useState("");
+
+  // Products at/below this quantity are
+  // flagged as low stock.
+  const LOW_STOCK_THRESHOLD = 5;
 
   const [formData, setFormData] = useState({
     name: "",
@@ -372,6 +386,83 @@ function Products() {
 
 
   // ==========================================
+  // RESTOCK (ADD TO CURRENT STOCK)
+  // ==========================================
+
+  const restock = async () => {
+    if (restockValue === "") {
+      setError(
+        "Please enter a quantity to add"
+      );
+      return;
+    }
+
+    const amount = Number(restockValue);
+
+    if (
+      !Number.isInteger(amount) ||
+      amount <= 0
+    ) {
+      setError(
+        "Restock amount must be a positive whole number"
+      );
+      return;
+    }
+
+    const newQuantity =
+      Number(restockProduct.stockQuantity) +
+      amount;
+
+    try {
+      setSaving(true);
+      setError("");
+
+      await apiRequest(
+        `/inventory/products/${restockProduct.productId}/stock`,
+        {
+          method: "PATCH",
+
+          body: JSON.stringify({
+            stockQuantity: newQuantity,
+          }),
+        }
+      );
+
+      setRestockProduct(null);
+      setRestockValue("");
+
+      await loadProducts();
+
+    } catch (error) {
+      console.error(
+        "Failed to restock:",
+        error
+      );
+
+      setError(
+        error.message ||
+          "Failed to restock"
+      );
+
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
+  // ==========================================
+  // LOW STOCK HELPERS
+  // ==========================================
+
+  const isLowStock = (product) =>
+    Number(product.stockQuantity) <=
+    LOW_STOCK_THRESHOLD;
+
+  const lowStockCount =
+    products.filter(isLowStock).length;
+
+
+  // ==========================================
   // RENDER
   // ==========================================
 
@@ -396,6 +487,15 @@ function Products() {
           </p>
 
         </div>
+
+        <button
+          onClick={() =>
+            navigate("/owner-dashboard")
+          }
+          className="secondary-button"
+        >
+          Back to Dashboard
+        </button>
 
       </div>
 
@@ -431,6 +531,23 @@ function Products() {
 
             <p className="dashboard-card-number">
               {products.length}
+            </p>
+
+          </div>
+
+
+          <div className="dashboard-card">
+
+            <div className="dashboard-card-icon">
+              ⚠️
+            </div>
+
+            <h3>
+              Low Stock (≤ {LOW_STOCK_THRESHOLD})
+            </h3>
+
+            <p className="dashboard-card-number">
+              {lowStockCount}
             </p>
 
           </div>
@@ -704,12 +821,45 @@ function Products() {
                       Stock:{" "}
                       {product.stockQuantity}{" "}
                       {product.unit}
+
+                      {isLowStock(
+                        product
+                      ) && (
+
+                        <span
+                          className="status-cancelled"
+                          style={{
+                            marginLeft: "8px",
+                          }}
+                        >
+                          Low stock
+                        </span>
+
+                      )}
                     </p>
 
                   </div>
 
 
                   <div className="quick-actions">
+
+                    <button
+                      onClick={() => {
+                        setRestockProduct(
+                          product
+                        );
+
+                        setRestockValue("");
+                      }}
+                      className={
+                        isLowStock(product)
+                          ? "primary-button"
+                          : "secondary-button"
+                      }
+                    >
+                      Restock
+                    </button>
+
 
                     <button
                       onClick={() =>
@@ -830,6 +980,113 @@ function Products() {
               onClick={() => {
                 setStockProduct(null);
                 setStockValue("");
+              }}
+              className="secondary-button"
+            >
+              Cancel
+            </button>
+
+          </div>
+
+        </div>
+
+      )}
+
+
+      {/* =====================================
+          RESTOCK
+      ===================================== */}
+
+      {restockProduct && (
+
+        <div className="dashboard-section">
+
+          <div className="section-header">
+
+            <h2>
+              Restock
+            </h2>
+
+            <button
+              onClick={() => {
+                setRestockProduct(null);
+                setRestockValue("");
+              }}
+              className="text-button"
+            >
+              Close
+            </button>
+
+          </div>
+
+
+          <p>
+            Product:{" "}
+            <strong>
+              {restockProduct.name}
+            </strong>
+          </p>
+
+          <p>
+            Current stock:{" "}
+            <strong>
+              {restockProduct.stockQuantity}{" "}
+              {restockProduct.unit}
+            </strong>
+          </p>
+
+
+          <label>
+            Quantity to Add
+          </label>
+
+          <input
+            type="number"
+            value={restockValue}
+            onChange={(event) =>
+              setRestockValue(
+                event.target.value
+              )
+            }
+            min="1"
+            placeholder="e.g. 20"
+          />
+
+
+          {restockValue !== "" &&
+            Number(restockValue) > 0 && (
+
+              <p>
+                New stock will be:{" "}
+                <strong>
+                  {Number(
+                    restockProduct.stockQuantity
+                  ) +
+                    Number(restockValue)}{" "}
+                  {restockProduct.unit}
+                </strong>
+              </p>
+
+            )}
+
+
+          <div className="quick-actions">
+
+            <button
+              onClick={restock}
+              className="primary-button"
+              disabled={saving}
+            >
+              {saving
+                ? "Restocking..."
+                : "Add Stock"}
+            </button>
+
+
+            <button
+              onClick={() => {
+                setRestockProduct(null);
+                setRestockValue("");
               }}
               className="secondary-button"
             >

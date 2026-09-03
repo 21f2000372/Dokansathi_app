@@ -9,6 +9,8 @@ import { User, UserRole } from "../entities/User";
 
 import { Order } from "../entities/Order";
 
+import { createNotification } from "./notificationService";
+
 import { randomUUID } from "crypto";
 
 const taskRepository =
@@ -109,6 +111,24 @@ export const createTask = async (
 
   const savedTask =
     await taskRepository.save(task);
+
+  // Notify the assistant that a task was
+  // assigned to them. Non-fatal.
+  try {
+    await createNotification(
+      assistant.userId,
+      order.orderId,
+      `You have been assigned a new task for order #${order.orderId.slice(
+        0,
+        8
+      )}.`
+    );
+  } catch (notifyError) {
+    console.error(
+      "Failed to create assistant notification:",
+      notifyError
+    );
+  }
 
   return savedTask;
 };
@@ -296,7 +316,11 @@ export const getAssistantTasks = async (
     },
 
     relations: {
-      order: true,
+      order: {
+        items: {
+          product: true,
+        },
+      },
     },
 
     select: {
@@ -321,6 +345,20 @@ export const getAssistantTasks = async (
         totalAmount: true,
         queuePosition: true,
         shopOwnerId: true,
+
+        items: {
+          itemId: true,
+          quantity: true,
+          unitPrice: true,
+
+          product: {
+            productId: true,
+            name: true,
+            category: true,
+            unit: true,
+            price: true,
+          },
+        },
       },
     },
 

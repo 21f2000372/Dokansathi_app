@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../services/api";
 
 function Users() {
+  const navigate = useNavigate();
   // =========================
   // USERS
   // =========================
@@ -365,6 +367,15 @@ function Users() {
             Manage assistants and customers
           </p>
         </div>
+
+        <button
+          onClick={() =>
+            navigate("/owner-dashboard")
+          }
+          className="secondary-button"
+        >
+          Back to Dashboard
+        </button>
       </div>
 
       {/* =========================

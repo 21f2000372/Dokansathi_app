@@ -2,12 +2,24 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { apiRequest } from "../services/api";
+import { useCart } from "../context/CartContext";
 
 function CustomerProducts() {
   const navigate = useNavigate();
 
+  const {
+    cart,
+    addToCart: addItemToCart,
+    updateQuantity: updateCartQuantity,
+    removeFromCart,
+    clearCart,
+    cartTotal,
+    cartItemCount,
+  } = useCart();
+
   const [products, setProducts] = useState([]);
-  const [cart, setCart] = useState([]);
+  const [searchTerm, setSearchTerm] =
+    useState("");
 
   const [loading, setLoading] = useState(true);
   const [placingOrder, setPlacingOrder] =
@@ -61,54 +73,10 @@ function CustomerProducts() {
     setError("");
     setSuccess("");
 
-    const existingItem =
-      cart.find(
-        (item) =>
-          item.productId ===
-          product.productId
-      );
+    const result = addItemToCart(product);
 
-    if (existingItem) {
-
-      if (
-        existingItem.quantity >=
-        product.stockQuantity
-      ) {
-        setError(
-          "You cannot add more than the available stock."
-        );
-        return;
-      }
-
-      setCart(
-        cart.map((item) =>
-          item.productId ===
-          product.productId
-            ? {
-                ...item,
-                quantity:
-                  item.quantity + 1,
-              }
-            : item
-        )
-      );
-
-    } else {
-
-      setCart([
-        ...cart,
-        {
-          productId:
-            product.productId,
-          name: product.name,
-          price: Number(product.price),
-          unit: product.unit,
-          quantity: 1,
-          stockQuantity:
-            product.stockQuantity,
-        },
-      ]);
-
+    if (result !== true) {
+      setError(result);
     }
   };
 
@@ -121,78 +89,15 @@ function CustomerProducts() {
     productId,
     quantity
   ) => {
-
-    const item = cart.find(
-      (item) =>
-        item.productId === productId
+    const result = updateCartQuantity(
+      productId,
+      quantity
     );
 
-    if (!item) {
-      return;
+    if (result !== true) {
+      setError(result);
     }
-
-    if (quantity < 1) {
-      removeFromCart(productId);
-      return;
-    }
-
-    if (
-      quantity > item.stockQuantity
-    ) {
-      setError(
-        "Quantity cannot exceed available stock."
-      );
-      return;
-    }
-
-    setCart(
-      cart.map((item) =>
-        item.productId === productId
-          ? {
-              ...item,
-              quantity,
-            }
-          : item
-      )
-    );
   };
-
-
-  // ==========================================
-  // REMOVE FROM CART
-  // ==========================================
-
-  const removeFromCart = (
-    productId
-  ) => {
-
-    setCart(
-      cart.filter(
-        (item) =>
-          item.productId !== productId
-      )
-    );
-  };
-
-
-  // ==========================================
-  // CART TOTAL
-  // ==========================================
-
-  const cartTotal = cart.reduce(
-    (total, item) =>
-      total +
-      item.price * item.quantity,
-    0
-  );
-
-
-  const cartItemCount =
-    cart.reduce(
-      (total, item) =>
-        total + item.quantity,
-      0
-    );
 
 
   // ==========================================
@@ -241,7 +146,7 @@ function CustomerProducts() {
       );
 
 
-      setCart([]);
+      clearCart();
 
       setSuccess(
         "Order placed successfully!"
@@ -268,6 +173,32 @@ function CustomerProducts() {
       setPlacingOrder(false);
     }
   };
+
+
+  // ==========================================
+  // FILTERED PRODUCTS (SEARCH)
+  // ==========================================
+
+  const filteredProducts = products.filter(
+    (product) => {
+      const term = searchTerm
+        .trim()
+        .toLowerCase();
+
+      if (term === "") {
+        return true;
+      }
+
+      return (
+        product.name
+          ?.toLowerCase()
+          .includes(term) ||
+        product.category
+          ?.toLowerCase()
+          .includes(term)
+      );
+    }
+  );
 
 
   // ==========================================
@@ -298,7 +229,7 @@ function CustomerProducts() {
 
         <button
           onClick={() =>
-            navigate("/customer")
+            navigate("/customer-dashboard")
           }
           className="secondary-button"
         >
@@ -337,15 +268,30 @@ function CustomerProducts() {
             Available Products
           </h2>
 
-          <button
-            onClick={loadProducts}
-            className="secondary-button"
-            disabled={loading}
-          >
-            {loading
-              ? "Loading..."
-              : "Refresh"}
-          </button>
+          <div className="quick-actions">
+
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(
+                  event.target.value
+                )
+              }
+              placeholder="Search by name or category..."
+            />
+
+            <button
+              onClick={loadProducts}
+              className="secondary-button"
+              disabled={loading}
+            >
+              {loading
+                ? "Loading..."
+                : "Refresh"}
+            </button>
+
+          </div>
 
         </div>
 
@@ -362,11 +308,17 @@ function CustomerProducts() {
             No products available.
           </p>
 
+        ) : filteredProducts.length === 0 ? (
+
+          <p>
+            No products match your search.
+          </p>
+
         ) : (
 
           <div className="dashboard-cards">
 
-            {products.map(
+            {filteredProducts.map(
               (product) => (
 
                 <div

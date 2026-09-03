@@ -3,14 +3,27 @@ import { useNavigate } from "react-router-dom";
 
 import { apiRequest } from "../services/api";
 
-function Orders() {
-  const navigate = useNavigate();
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
-  const [selectedOrder, setSelectedOrder] = useState(null);
-  const [updating, setUpdating] = useState(false);
+function CustomerOrders() {
+  const navigate = useNavigate();
+
+  const [orders, setOrders] = useState([]);
+
+  const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] =
+    useState(null);
+
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const [statusFilter, setStatusFilter] =
+    useState("all");
+
+  const [searchTerm, setSearchTerm] =
+    useState("");
+
+  const [selectedOrder, setSelectedOrder] =
+    useState(null);
 
 
   // ==========================================
@@ -23,7 +36,7 @@ function Orders() {
       setError("");
 
       const data = await apiRequest(
-        "/orders/shop"
+        "/orders/my"
       );
 
       setOrders(data.orders || []);
@@ -50,63 +63,13 @@ function Orders() {
 
 
   // ==========================================
-  // UPDATE ORDER STATUS
-  // ==========================================
-
-  const updateStatus = async (
-    orderId,
-    status
-  ) => {
-    try {
-      setUpdating(true);
-      setError("");
-
-      await apiRequest(
-        `/orders/shop/${orderId}/status`,
-        {
-          method: "PATCH",
-          body: JSON.stringify({
-            status,
-          }),
-        }
-      );
-
-      // Reload orders after update
-      await loadOrders();
-
-      // Update selected order if open
-      if (
-        selectedOrder &&
-        selectedOrder.orderId === orderId
-      ) {
-        setSelectedOrder(null);
-      }
-
-    } catch (error) {
-      console.error(
-        "Failed to update order status:",
-        error
-      );
-
-      setError(
-        error.message ||
-          "Failed to update order status"
-      );
-    } finally {
-      setUpdating(false);
-    }
-  };
-
-
-  // ==========================================
   // CANCEL ORDER
   // ==========================================
 
-  const cancelOrder = async (
-    orderId
-  ) => {
+  const cancelOrder = async (orderId) => {
+
     const confirmed = window.confirm(
-      "Are you sure you want to cancel this order?"
+      "Are you sure you want to cancel this order? This cannot be undone."
     );
 
     if (!confirmed) {
@@ -114,19 +77,31 @@ function Orders() {
     }
 
     try {
-      setUpdating(true);
+      setCancellingId(orderId);
       setError("");
+      setSuccess("");
 
       await apiRequest(
-        `/orders/shop/${orderId}/cancel`,
+        `/orders/my/${orderId}/cancel`,
         {
           method: "PATCH",
         }
       );
 
-      await loadOrders();
+      setSuccess(
+        "Order cancelled successfully."
+      );
 
-      setSelectedOrder(null);
+      // Close details panel if the
+      // cancelled order was open.
+      if (
+        selectedOrder &&
+        selectedOrder.orderId === orderId
+      ) {
+        setSelectedOrder(null);
+      }
+
+      await loadOrders();
 
     } catch (error) {
       console.error(
@@ -139,7 +114,7 @@ function Orders() {
           "Failed to cancel order"
       );
     } finally {
-      setUpdating(false);
+      setCancellingId(null);
     }
   };
 
@@ -175,6 +150,86 @@ function Orders() {
 
 
   // ==========================================
+  // COUNTS + FILTER
+  // ==========================================
+
+  const activeOrders = orders.filter(
+    (order) =>
+      order.status !== "completed" &&
+      order.status !== "cancelled"
+  );
+
+  const completedOrders = orders.filter(
+    (order) =>
+      order.status === "completed"
+  );
+
+  const filteredOrders =
+    statusFilter === "all"
+      ? orders
+      : orders.filter(
+          (order) =>
+            order.status === statusFilter
+        );
+
+
+  // Search is applied on top of the status
+  // filter. Matches order ID, status, or any
+  // product name within the order's items.
+  const searchedOrders =
+    filteredOrders.filter((order) => {
+      const term = searchTerm
+        .trim()
+        .toLowerCase();
+
+      if (term === "") {
+        return true;
+      }
+
+      const matchesId = order.orderId
+        ?.toLowerCase()
+        .includes(term);
+
+      const matchesStatus = order.status
+        ?.toLowerCase()
+        .includes(term);
+
+      const matchesItem = order.items?.some(
+        (item) =>
+          item.product?.name
+            ?.toLowerCase()
+            .includes(term)
+      );
+
+      return (
+        matchesId ||
+        matchesStatus ||
+        matchesItem
+      );
+    });
+
+
+  const filters = [
+    { key: "all", label: "All" },
+    { key: "pending", label: "Pending" },
+    {
+      key: "in-progress",
+      label: "In Progress",
+    },
+    { key: "ready", label: "Ready" },
+    { key: "billed", label: "Billed" },
+    {
+      key: "completed",
+      label: "Completed",
+    },
+    {
+      key: "cancelled",
+      label: "Cancelled",
+    },
+  ];
+
+
+  // ==========================================
   // RENDER
   // ==========================================
 
@@ -190,30 +245,43 @@ function Orders() {
         <div>
 
           <h1>
-            Orders
+            My Orders
           </h1>
 
           <p>
-            View and manage orders from your
-            customers.
+            View your orders and cancel any
+            that are still pending.
           </p>
 
         </div>
 
-        <button
-          onClick={() =>
-            navigate("/owner-dashboard")
-          }
-          className="secondary-button"
-        >
-          Back to Dashboard
-        </button>
+        <div className="quick-actions">
+
+          <button
+            onClick={() =>
+              navigate("/customer-dashboard")
+            }
+            className="secondary-button"
+          >
+            Back to Dashboard
+          </button>
+
+          <button
+            onClick={() =>
+              navigate("/customer/products")
+            }
+            className="primary-button"
+          >
+            Browse Products
+          </button>
+
+        </div>
 
       </div>
 
 
       {/* =====================================
-          ERROR
+          MESSAGES
       ===================================== */}
 
       {error && (
@@ -222,101 +290,74 @@ function Orders() {
         </div>
       )}
 
-
-      {/* =====================================
-          ORDER SUMMARY
-      ===================================== */}
-
-      {!loading && (
-        <div className="dashboard-cards">
-
-          <div className="dashboard-card">
-
-            <div className="dashboard-card-icon">
-              🛒
-            </div>
-
-            <h3>
-              Total Orders
-            </h3>
-
-            <p className="dashboard-card-number">
-              {orders.length}
-            </p>
-
-          </div>
-
-
-          <div className="dashboard-card">
-
-            <div className="dashboard-card-icon">
-              ⏳
-            </div>
-
-            <h3>
-              Pending
-            </h3>
-
-            <p className="dashboard-card-number">
-              {
-                orders.filter(
-                  (order) =>
-                    order.status ===
-                    "pending"
-                ).length
-              }
-            </p>
-
-          </div>
-
-
-          <div className="dashboard-card">
-
-            <div className="dashboard-card-icon">
-              📋
-            </div>
-
-            <h3>
-              In Progress
-            </h3>
-
-            <p className="dashboard-card-number">
-              {
-                orders.filter(
-                  (order) =>
-                    order.status ===
-                    "in-progress"
-                ).length
-              }
-            </p>
-
-          </div>
-
-
-          <div className="dashboard-card">
-
-            <div className="dashboard-card-icon">
-              ✅
-            </div>
-
-            <h3>
-              Completed
-            </h3>
-
-            <p className="dashboard-card-number">
-              {
-                orders.filter(
-                  (order) =>
-                    order.status ===
-                    "completed"
-                ).length
-              }
-            </p>
-
-          </div>
-
+      {success && (
+        <div className="success-message">
+          {success}
         </div>
       )}
+
+
+      {/* =====================================
+          SUMMARY CARDS
+      ===================================== */}
+
+      <div className="dashboard-cards">
+
+        <div className="dashboard-card">
+
+          <div className="dashboard-card-icon">
+            🛒
+          </div>
+
+          <h3>
+            Total Orders
+          </h3>
+
+          <p className="dashboard-card-number">
+            {loading ? "..." : orders.length}
+          </p>
+
+        </div>
+
+
+        <div className="dashboard-card">
+
+          <div className="dashboard-card-icon">
+            📦
+          </div>
+
+          <h3>
+            Active
+          </h3>
+
+          <p className="dashboard-card-number">
+            {loading
+              ? "..."
+              : activeOrders.length}
+          </p>
+
+        </div>
+
+
+        <div className="dashboard-card">
+
+          <div className="dashboard-card-icon">
+            ✅
+          </div>
+
+          <h3>
+            Completed
+          </h3>
+
+          <p className="dashboard-card-number">
+            {loading
+              ? "..."
+              : completedOrders.length}
+          </p>
+
+        </div>
+
+      </div>
 
 
       {/* =====================================
@@ -328,18 +369,58 @@ function Orders() {
         <div className="section-header">
 
           <h2>
-            All Orders
+            Order History
           </h2>
 
-          <button
-            onClick={loadOrders}
-            className="secondary-button"
-            disabled={loading}
-          >
-            {loading
-              ? "Loading..."
-              : "Refresh"}
-          </button>
+          <div className="quick-actions">
+
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(event) =>
+                setSearchTerm(
+                  event.target.value
+                )
+              }
+              placeholder="Search by order ID, status, or product..."
+            />
+
+            <button
+              onClick={loadOrders}
+              className="secondary-button"
+              disabled={loading}
+            >
+              {loading
+                ? "Loading..."
+                : "Refresh"}
+            </button>
+
+          </div>
+
+        </div>
+
+
+        {/* FILTER BUTTONS */}
+
+        <div className="quick-actions">
+
+          {filters.map((filter) => (
+
+            <button
+              key={filter.key}
+              onClick={() =>
+                setStatusFilter(filter.key)
+              }
+              className={
+                statusFilter === filter.key
+                  ? "primary-button"
+                  : "secondary-button"
+              }
+            >
+              {filter.label}
+            </button>
+
+          ))}
 
         </div>
 
@@ -347,20 +428,48 @@ function Orders() {
         {loading ? (
 
           <p>
-            Loading orders...
+            Loading your orders...
           </p>
 
         ) : orders.length === 0 ? (
 
+          <div>
+
+            <p>
+              You haven't placed any orders
+              yet.
+            </p>
+
+            <button
+              onClick={() =>
+                navigate(
+                  "/customer/products"
+                )
+              }
+              className="primary-button"
+            >
+              Browse Products
+            </button>
+
+          </div>
+
+        ) : filteredOrders.length === 0 ? (
+
           <p>
-            No orders found.
+            No orders with this status.
+          </p>
+
+        ) : searchedOrders.length === 0 ? (
+
+          <p>
+            No orders match your search.
           </p>
 
         ) : (
 
           <div className="orders-list">
 
-            {orders.map((order) => (
+            {searchedOrders.map((order) => (
 
               <div
                 key={order.orderId}
@@ -378,15 +487,16 @@ function Orders() {
 
                     <h3>
                       Order #
-                      {order.orderId.slice(0, 8)}
+                      {order.orderId.slice(
+                        0,
+                        8
+                      )}
                     </h3>
 
                     <p>
-                      Customer:{" "}
-                      <strong>
-                        {order.customer?.name ||
-                          "Unknown"}
-                      </strong>
+                      {new Date(
+                        order.createdAt
+                      ).toLocaleString()}
                     </p>
 
                   </div>
@@ -416,57 +526,20 @@ function Orders() {
 
                   <p>
                     <strong>
+                      Items:
+                    </strong>{" "}
+                    {order.items?.length || 0}
+                  </p>
+
+                  <p>
+                    <strong>
                       Queue Position:
                     </strong>{" "}
                     {order.queuePosition ??
                       "Not in queue"}
                   </p>
 
-                  <p>
-                    <strong>
-                      Created:
-                    </strong>{" "}
-                    {new Date(
-                      order.createdAt
-                    ).toLocaleString()}
-                  </p>
-
                 </div>
-
-
-                {/* Order items */}
-
-                {order.items &&
-                  order.items.length > 0 && (
-
-                    <div>
-
-                      <h4>
-                        Items
-                      </h4>
-
-                      {order.items.map(
-                        (item) => (
-
-                          <p
-                            key={
-                              item.itemId
-                            }
-                          >
-                            {item.product?.name ||
-                              "Product"}{" "}
-                            ×{" "}
-                            {item.quantity}{" "}
-                            — ₹
-                            {item.unitPrice}
-                          </p>
-
-                        )
-                      )}
-
-                    </div>
-
-                  )}
 
 
                 {/* Actions */}
@@ -496,75 +569,20 @@ function Orders() {
 
                     <button
                       onClick={() =>
-                        updateStatus(
-                          order.orderId,
-                          "in-progress"
-                        )
-                      }
-                      className="secondary-button"
-                      disabled={updating}
-                    >
-                      Start Processing
-                    </button>
-
-                  )}
-
-
-                  {order.status ===
-                    "in-progress" && (
-
-                    <button
-                      onClick={() =>
-                        updateStatus(
-                          order.orderId,
-                          "ready"
-                        )
-                      }
-                      className="secondary-button"
-                      disabled={updating}
-                    >
-                      Mark Ready
-                    </button>
-
-                  )}
-
-
-                  {order.status ===
-                    "ready" && (
-
-                    <button
-                      onClick={() =>
-                        updateStatus(
-                          order.orderId,
-                          "completed"
-                        )
-                      }
-                      className="secondary-button"
-                      disabled={updating}
-                    >
-                      Complete Order
-                    </button>
-
-                  )}
-
-
-                  {order.status !==
-                    "completed" &&
-                    order.status !==
-                      "cancelled" &&
-                    order.status !==
-                      "billed" && (
-
-                    <button
-                      onClick={() =>
                         cancelOrder(
                           order.orderId
                         )
                       }
                       className="secondary-button"
-                      disabled={updating}
+                      disabled={
+                        cancellingId ===
+                        order.orderId
+                      }
                     >
-                      Cancel
+                      {cancellingId ===
+                      order.orderId
+                        ? "Cancelling..."
+                        : "Cancel Order"}
                     </button>
 
                   )}
@@ -599,33 +617,6 @@ function Orders() {
 
                     <p>
                       <strong>
-                        Customer:
-                      </strong>{" "}
-                      {order.customer?.name ||
-                        "Unknown"}
-                    </p>
-
-
-                    <p>
-                      <strong>
-                        Phone:
-                      </strong>{" "}
-                      {order.customer?.phone ||
-                        "Not available"}
-                    </p>
-
-
-                    <p>
-                      <strong>
-                        Email:
-                      </strong>{" "}
-                      {order.customer?.email ||
-                        "Not available"}
-                    </p>
-
-
-                    <p>
-                      <strong>
                         Status:
                       </strong>{" "}
                       <span
@@ -635,6 +626,16 @@ function Orders() {
                       >
                         {order.status}
                       </span>
+                    </p>
+
+
+                    <p>
+                      <strong>
+                        Placed On:
+                      </strong>{" "}
+                      {new Date(
+                        order.createdAt
+                      ).toLocaleString()}
                     </p>
 
 
@@ -680,6 +681,8 @@ function Orders() {
                             {" — ₹"}
 
                             {item.unitPrice}
+
+                            {" each"}
                           </p>
 
                         </div>
@@ -706,4 +709,4 @@ function Orders() {
   );
 }
 
-export default Orders;
+export default CustomerOrders;
